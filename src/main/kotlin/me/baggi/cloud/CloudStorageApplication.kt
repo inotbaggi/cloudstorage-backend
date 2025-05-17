@@ -1,4 +1,4 @@
-package me.baggi.cloudstoragebackend
+package me.baggi.cloud
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
