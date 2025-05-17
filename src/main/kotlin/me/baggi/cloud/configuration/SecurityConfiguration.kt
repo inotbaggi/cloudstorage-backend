@@ -1,5 +1,6 @@
 package me.baggi.cloud.configuration
 
+import me.baggi.cloud.configuration.security.JWTFilter
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
@@ -11,11 +12,13 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.HttpStatusEntryPoint
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 
 @Configuration
 @EnableWebSecurity
-class SecurityConfiguration {
-
+class SecurityConfiguration(
+    private val jwtFilter: JWTFilter
+) {
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain =
         http.csrf { it.disable() }
@@ -31,6 +34,7 @@ class SecurityConfiguration {
                     .requestMatchers("/api/**").authenticated()
             }
             .exceptionHandling { it.authenticationEntryPoint(HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)) }
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter::class.java)
             .build()
 
     @Bean
