@@ -16,11 +16,7 @@ class AuthService(
 ) {
     fun authenticate(username: String, password: String, request: HttpServletRequest) {
         val authRequest = UsernamePasswordAuthenticationToken(username, password)
-        val authentication = try {
-            SecurityContextHolder.getContext().authentication = authManager.authenticate(authRequest)
-        } catch (ex: AuthenticationException) {
-            throw BadCredentialsException("Invalid username or password")
-        }
+        SecurityContextHolder.getContext().authentication = authManager.authenticate(authRequest)
         request.session
     }
 

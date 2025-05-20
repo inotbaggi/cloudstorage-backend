@@ -12,6 +12,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.HttpStatusEntryPoint
+import org.springframework.security.web.authentication.logout.HeaderWriterLogoutHandler
+import org.springframework.security.web.header.writers.ClearSiteDataHeaderWriter
 
 
 @Configuration
@@ -20,6 +22,7 @@ class SecurityConfiguration {
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain =
         http.csrf { it.disable() }
+            .cors {}
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) }
             .anonymous { it.disable() }
             .authorizeHttpRequests {
@@ -29,15 +32,25 @@ class SecurityConfiguration {
                 ).permitAll()
                     .anyRequest().authenticated()
             }
+            .sessionManagement {
+                it.maximumSessions(1)
+                    .expiredUrl("/api/auth/sign-in")
+            }
             .formLogin { it.disable() }
             .exceptionHandling { it.authenticationEntryPoint(HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)) }
             .logout {
                 it.apply {
-                    logoutSuccessUrl("/api/auth/sign-in")
                     logoutUrl("/api/auth/sign-out")
-                    invalidateHttpSession(true)
-                    deleteCookies("STORAGE_SESSION")
-                    clearAuthentication(true)
+                    addLogoutHandler { _, _, _ ->
+                        HeaderWriterLogoutHandler(
+                            ClearSiteDataHeaderWriter(
+                                ClearSiteDataHeaderWriter.Directive.COOKIES
+                            )
+                        )
+                    }
+                    logoutSuccessHandler { request, response, authentication ->
+                        response.status = HttpStatus.NO_CONTENT.value()
+                    }
                 }
             }
             .build()

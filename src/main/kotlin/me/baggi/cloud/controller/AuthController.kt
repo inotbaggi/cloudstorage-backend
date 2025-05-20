@@ -28,16 +28,8 @@ class AuthController(
 
     @PostMapping("/sign-in")
     fun signIn(@RequestBody body: UserDTO, request: HttpServletRequest): ResponseEntity<UserResponse> {
-        authService.authenticate(body.username, body.password, request)
         val user = userService.findByUsername(body.username)
+        authService.authenticate(body.username, body.password, request)
         return ResponseEntity.ok(UserResponse(user.username))
-    }
-
-
-    @PostMapping("/sign-out")
-    fun signOut(request: HttpServletRequest): ResponseEntity<Void> {
-        request.session.invalidate()
-        SecurityContextHolder.clearContext()
-        return ResponseEntity.ok().build()
     }
 }
