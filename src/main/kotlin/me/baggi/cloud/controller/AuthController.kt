@@ -1,10 +1,12 @@
 package me.baggi.cloud.controller
 
-import me.baggi.cloud.dto.request.UserLoginRequest
-import me.baggi.cloud.dto.request.UserRegisterRequest
-import me.baggi.cloud.dto.response.UserLoginResponse
-import me.baggi.cloud.dto.response.UserRegisterResponse
+import jakarta.servlet.http.HttpServletRequest
+import me.baggi.cloud.dto.UserDTO
+import me.baggi.cloud.dto.UserResponse
+import me.baggi.cloud.service.AuthService
+import me.baggi.cloud.service.UserService
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -12,17 +14,30 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/auth")
-class AuthController {
+class AuthController(
+    private val authService: AuthService,
+    private val userService: UserService
+) {
     @PostMapping("/sign-up")
-    fun signUp(@RequestBody userRegisterRequest: UserRegisterRequest): ResponseEntity<UserRegisterResponse> {
-
+    fun signUp(@RequestBody body: UserDTO, request: HttpServletRequest): ResponseEntity<UserResponse> {
+        val user = userService.create(body)
+        authService.authenticate(body.username, body.password, request)
+        return ResponseEntity.ok(UserResponse(user.username))
     }
+
 
     @PostMapping("/sign-in")
-    fun signIn(@RequestBody userLoginRequest: UserLoginRequest): ResponseEntity<UserLoginResponse> {
-
+    fun signIn(@RequestBody body: UserDTO, request: HttpServletRequest): ResponseEntity<UserResponse> {
+        authService.authenticate(body.username, body.password, request)
+        val user = userService.findByUsername(body.username)
+        return ResponseEntity.ok(UserResponse(user.username))
     }
 
+
     @PostMapping("/sign-out")
-    fun signOut(): ResponseEntity<UserLoginResponse> {}
+    fun signOut(request: HttpServletRequest): ResponseEntity<Void> {
+        request.session.invalidate()
+        SecurityContextHolder.clearContext()
+        return ResponseEntity.ok().build()
+    }
 }
