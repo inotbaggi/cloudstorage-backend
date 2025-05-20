@@ -7,12 +7,12 @@ import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
-import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
-import org.springframework.security.web.authentication.HttpStatusEntryPoint
 import org.springframework.security.web.authentication.logout.HeaderWriterLogoutHandler
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository
+import org.springframework.security.web.context.SecurityContextRepository
 import org.springframework.security.web.header.writers.ClearSiteDataHeaderWriter
 
 
@@ -23,8 +23,6 @@ class SecurityConfiguration {
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain =
         http.csrf { it.disable() }
             .cors {}
-            .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) }
-            .anonymous { it.disable() }
             .authorizeHttpRequests {
                 it.requestMatchers(
                     "/api/auth/sign-up", "/api/auth/sign-in",
@@ -36,8 +34,9 @@ class SecurityConfiguration {
                 it.maximumSessions(1)
                     .expiredUrl("/api/auth/sign-in")
             }
+            .securityContext { it.securityContextRepository(securityContextRepository()) }
             .formLogin { it.disable() }
-            .exceptionHandling { it.authenticationEntryPoint(HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)) }
+            //.exceptionHandling { it.authenticationEntryPoint(HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)) }
             .logout {
                 it.apply {
                     logoutUrl("/api/auth/sign-out")
@@ -54,6 +53,11 @@ class SecurityConfiguration {
                 }
             }
             .build()
+
+    @Bean
+    fun securityContextRepository(): SecurityContextRepository {
+        return HttpSessionSecurityContextRepository()
+    }
 
     @Bean
     fun authenticationManager(authenticationConfiguration: AuthenticationConfiguration): AuthenticationManager =

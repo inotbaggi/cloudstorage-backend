@@ -1,6 +1,7 @@
 package me.baggi.cloud.controller
 
 import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 import me.baggi.cloud.dto.UserDTO
 import me.baggi.cloud.dto.UserResponse
 import me.baggi.cloud.service.AuthService
@@ -19,17 +20,16 @@ class AuthController(
     private val userService: UserService
 ) {
     @PostMapping("/sign-up")
-    fun signUp(@RequestBody body: UserDTO, request: HttpServletRequest): ResponseEntity<UserResponse> {
+    fun signUp(@RequestBody body: UserDTO, request: HttpServletRequest, response: HttpServletResponse): ResponseEntity<UserResponse> {
         val user = userService.create(body)
-        authService.authenticate(body.username, body.password, request)
+        authService.authenticate(body.username, body.password, request, response)
         return ResponseEntity.ok(UserResponse(user.username))
     }
 
-
     @PostMapping("/sign-in")
-    fun signIn(@RequestBody body: UserDTO, request: HttpServletRequest): ResponseEntity<UserResponse> {
+    fun signIn(@RequestBody body: UserDTO, request: HttpServletRequest, response: HttpServletResponse): ResponseEntity<UserResponse> {
         val user = userService.findByUsername(body.username)
-        authService.authenticate(body.username, body.password, request)
+        authService.authenticate(body.username, body.password, request, response)
         return ResponseEntity.ok(UserResponse(user.username))
     }
 }
